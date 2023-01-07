@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "isolatedModules": true,
+    "sourceMap": true,
+    "typeRoots": ["./node_modules/@types"],
+    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM"],
+    "target": "es2020",
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

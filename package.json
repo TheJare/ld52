@@ -1,0 +1,19 @@
+{
+  "name": "ld52",
+  "source": "src/index.html",
+  "scripts": {
+    "start": "parcel --open --dist-dir temp/dist",
+    "build": "parcel build --no-source-maps --public-url ./"
+  },
+  "devDependencies": {
+    "parcel": "^2.8.2",
+    "parcel-reporter-clean-dist": "^1.0.4",
+    "parcel-reporter-static-files-copy": "^1.5.0"
+  },
+  "dependencies": {
+    "preact": "^10.11.3"
+  },
+  "alias": {
+    "preact/jsx-dev-runtime": "preact/jsx-runtime"
+  }
+}
