@@ -19,7 +19,7 @@ class GameBoard extends Component<{}, GameBoardState> {
       time: Date.now(),
       seeds: 0,
       grain: 0,
-      money: 0,
+      money: 9,
       land: [0]
     }
   }
@@ -66,6 +66,14 @@ class GameBoard extends Component<{}, GameBoardState> {
     }
   }
 
+  onLandBuyClick = () => {
+    if (this.state.money >= 10) {
+      let newLands = this.state.land.slice();
+      newLands.push(0);
+      this.setState({money: this.state.money - 10, land: newLands });
+    }
+  }
+
   render() {
     let availableLand = this.state.land.findIndex((v) => v == 0) >= 0;
     let harvestableLand = this.state.land.findIndex((v) => v != 0 && v <= this.state.time) >= 0;
@@ -74,6 +82,7 @@ class GameBoard extends Component<{}, GameBoardState> {
       <p>Seeds: {this.state.seeds} <>&nbsp;<button onClick={this.onSeedsClick}>Pick up</button></></p>
       <p>Land: {this.state.land.length}
         {/* [{this.state.land.join(", ")}] */}
+        <>&nbsp;<button onClick={this.onLandBuyClick} disabled={this.state.money < 10}>Buy</button></>
         {this.state.seeds > 0 && availableLand && <>&nbsp;<button onClick={this.onLandPlantClick}>Plant</button></>}
         {harvestableLand && <>&nbsp;<button onClick={this.onLandHarvestClick}>Harvest</button></>}
       </p>
