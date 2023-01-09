@@ -1,5 +1,7 @@
 # Ludum Dare 52 - Harvest Clicker
 
+*Unfortunately I did not have the opportunity to work on this more than a couple hours. The basic idea is there but I didn't get to the fun part: upgrades and automation.*
+
 The theme of [Ludum Dare 52 game jam](https://ldjam.com/events/ludum-dare/52) is: **Harvest**
 
 [Ludum Dare entry page](https://ldjam.com/events/ludum-dare/52/)

@@ -8,6 +8,12 @@ type GameBoardState = {
   grain: number;
   money: number;
   land: number[];
+  pickers: number[];
+  harvesters: number[];
+  sellers: number[];
+
+  maxMoney: number;
+  autoplant: boolean;
 };
 
 class GameBoard extends Component<{}, GameBoardState> {
@@ -20,7 +26,15 @@ class GameBoard extends Component<{}, GameBoardState> {
       seeds: 0,
       grain: 0,
       money: 9,
-      land: [0]
+      land: [0],
+      pickers: [],
+      harvesters: [],
+      sellers: [],
+
+
+      maxMoney: 0,
+
+      autoplant: false,
     }
   }
 
@@ -34,7 +48,7 @@ class GameBoard extends Component<{}, GameBoardState> {
 
   tick = () => {
     this.rafHandle = requestAnimationFrame(this.tick);
-    this.setState({time: Date.now()});
+    this.setState({time: Date.now(), maxMoney: Math.max(this.state.maxMoney, this.state.money)});
   }
 
   onSeedsClick = () => {
@@ -47,47 +61,95 @@ class GameBoard extends Component<{}, GameBoardState> {
   }
 
   onLandPlantClick = () => {
-    if (this.state.seeds > 0) {
-      let availableLand = this.state.land.findIndex((v) => v == 0);
-      if (availableLand >= 0) {
-        let newLands = this.state.land.slice();
-        newLands[availableLand] = this.state.time + 1000;
-        this.setState({seeds: this.state.seeds - 1, land: newLands });
-      }
-    }
+    if (this.state.autoplant) this.onLandHarvest();
+    this.onLandPlant();
   }
 
   onLandHarvestClick = () => {
-    let harvestableLand = this.state.land.findIndex((v) => v != 0 && v <= this.state.time);
-    if (harvestableLand  >= 0) {
-      let newLands = this.state.land.slice();
-      newLands[harvestableLand] = 0;
-      this.setState({grain: this.state.grain + 1, land: newLands });
+    this.onLandHarvest();
+    if (this.state.autoplant) this.onLandPlant();
+  }
+
+  onLandPlant = () => {
+    if (this.state.seeds > 0 && this.onUseItemAvailable("land", 1000)) {
+      this.setState({seeds: this.state.seeds - 1 });
     }
   }
 
-  onLandBuyClick = () => {
-    if (this.state.money >= 10) {
-      let newLands = this.state.land.slice();
-      newLands.push(0);
-      this.setState({money: this.state.money - 10, land: newLands });
+  onLandHarvest = () => {
+    if (this.onUseItemReady("land")) {
+      this.setState({grain: this.state.grain + 1});
     }
+  }
+
+  onBuyLandClick = () => this.onItemBuy("land", 10);
+  onBuyPickerClick = () => this.onItemBuy("pickers", 30);
+  onBuyHarvesterClick = () => this.onItemBuy("harvesters", 30);
+  onBuySellerClick = () => this.onItemBuy("sellers", 30);
+
+  onItemBuy = (which: string, cost: number) => {
+    if (this.state.money >= cost) {
+      let updatedItems = this.state[which].slice();
+      updatedItems.push(0);
+      this.setState({money: this.state.money - cost, [which]: updatedItems });
+    }
+  }
+
+  onBuyAutoplantClick = () => {
+    if (this.state.money >= 30) {
+      this.setState({money: this.state.money - 30, autoplant: true });
+    }
+  }
+
+  findAvailable = (which: string) => {
+    return this.state[which].findIndex((v: number) => v == 0);
+  }
+  findReady = (which: string) => {
+    return this.state[which].findIndex((v: number) => v != 0 && v <= this.state.time);
+  }
+  onUseItemReady = (which: string) => {
+    let readyItem = this.findReady(which);
+    if (readyItem == -1) {
+      return false;
+    }
+    let updatedItems = this.state[which].slice();
+    updatedItems[readyItem] = 0;
+    this.setState({[which]: updatedItems });
+    return true;
+  }
+  onUseItemAvailable = (which: string, duration: number) => {
+    let readyItem = this.findAvailable(which);
+    if (readyItem == -1) {
+      return false;
+    }
+    let updatedItems = this.state[which].slice();
+    updatedItems[readyItem] = this.state.time + duration;
+    this.setState({[which]: updatedItems });
+    return true;
   }
 
   render() {
-    let availableLand = this.state.land.findIndex((v) => v == 0) >= 0;
-    let harvestableLand = this.state.land.findIndex((v) => v != 0 && v <= this.state.time) >= 0;
+    let canPlant = this.state.seeds > 0 && this.findAvailable("land") >= 0;
+    let canHarvest = this.findReady("land") >= 0;
+    // let autoplant = this.state.autoplant && (canPlant || canHarvest);
     return <div>
       {/* <p>Time: {this.state.time}</p> */}
-      <p>Seeds: {this.state.seeds} <>&nbsp;<button onClick={this.onSeedsClick}>Pick up</button></></p>
-      <p>Land: {this.state.land.length}
+      <div>Seeds: {this.state.seeds} <>&nbsp;<button onClick={this.onSeedsClick}>Pick up</button></></div>
+      <div>Land: {this.state.land.length}
         {/* [{this.state.land.join(", ")}] */}
-        <>&nbsp;<button onClick={this.onLandBuyClick} disabled={this.state.money < 10}>Buy</button></>
-        {this.state.seeds > 0 && availableLand && <>&nbsp;<button onClick={this.onLandPlantClick}>Plant</button></>}
-        {harvestableLand && <>&nbsp;<button onClick={this.onLandHarvestClick}>Harvest</button></>}
-      </p>
-      <p>Grain: {this.state.grain} {} {(this.state.grain > 0) && <button onClick={this.onGrainSellClick}>Sell</button>}</p>
-      <p>Money: {this.state.money}</p>
+        <>&nbsp;<button onClick={this.onBuyLandClick} disabled={this.state.money < 10}>Buy (10)</button></>
+        {canPlant && <>&nbsp;<button onClick={this.onLandPlantClick}>Plant</button></>}
+        {canHarvest && <>&nbsp;<button onClick={this.onLandHarvestClick}>Harvest</button></>}
+      </div>
+      <div>Grain: {this.state.grain} {(this.state.grain > 0) && <>&nbsp;<button onClick={this.onGrainSellClick}>Sell</button></>}</div>
+      <div>Money: {this.state.money}</div>
+      <div>
+        {!this.state.autoplant && this.state.maxMoney >= 15 && <>&nbsp;<button onClick={this.onBuyAutoplantClick} disabled={this.state.money < 30} title="Automatically harvest & plant in one go">Buy Autoplant (30)</button></>}
+      </div><div>
+        {this.state.maxMoney >= 15 && <>&nbsp;<button onClick={this.onBuyPickerClick} disabled={this.state.money < 30} title={`Buy Automatic Picker (have ${this.state.pickers.length})`}>Buy Picker (30)</button></>}
+        {this.state.autoplant && this.state.maxMoney >= 15 && <>&nbsp;<button onClick={this.onBuyHarvesterClick} disabled={this.state.money < 30} title={`Buy Automatic Harvester/Planter (have ${this.state.harvesters.length})`}>Buy Harvester (30)</button></>}
+        {this.state.maxMoney >= 15 && <>&nbsp;<button onClick={this.onBuySellerClick} disabled={this.state.money < 30} title={`Buy Automatic Seller (have ${this.state.sellers.length})`}>Buy Seller (30)</button></>}
+      </div>
     </div>;
   }
 
